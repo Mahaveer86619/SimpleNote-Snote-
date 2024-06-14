@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/Mahaveer86619/SimpleNote-Snote-/config"
+	"github.com/dgrijalva/jwt-go"
 )
 
 type User struct {
@@ -17,9 +18,11 @@ type User struct {
 }
 
 type UserToReturn struct {
-	ID       string `json:"id"`
-	Username string `json:"username"`
-	Email    string `json:"email"`
+	ID              string `json:"id"`
+	Username        string `json:"username"`
+	Email           string `json:"email"`
+	TokenKey        string `json:"tokenKey"`
+	RefreshTokenKey string `json:"refreshTokenKey"`
 }
 
 type AuthenticatingUser struct {
@@ -66,7 +69,17 @@ func registerUser(registeringUser *RegisteringUser) (string, UserToReturn, error
 		return "Server Error", UserToReturn{}, err
 	}
 
-	return "Registration successful", UserToReturn{ID: id, Username: user.Username, Email: user.Email}, nil
+	token, err := GenerateToken(user.Email)
+	if err != nil {
+		return "Server Error", UserToReturn{}, err
+	}
+
+	refreshToken, err := GenerateRefreshToken(user.Email)
+	if err != nil {
+		return "Server Error", UserToReturn{}, err
+	}
+
+	return "Registration successful", UserToReturn{ID: id, Username: user.Username, Email: user.Email, TokenKey: token, RefreshTokenKey: refreshToken}, nil
 }
 
 func authenticateUser(authenticatingUser *AuthenticatingUser) (string, UserToReturn, error) {
@@ -90,6 +103,20 @@ func authenticateUser(authenticatingUser *AuthenticatingUser) (string, UserToRet
 	}
 
 	user := UserToReturn{ID: docs[0].Data()["ID"].(string), Username: docs[0].Data()["Username"].(string), Email: docs[0].Data()["Email"].(string)}
+
+	token, err := GenerateToken(user.Email)
+    if err != nil {
+        return "Server Error", UserToReturn{}, err
+    }
+
+    refreshToken, err := GenerateRefreshToken(user.Email)
+    if err != nil {
+        return "Server Error", UserToReturn{}, err
+    }
+
+    user.TokenKey = token
+    user.RefreshTokenKey = refreshToken
+
 	return "Authentication successful", user, nil
 }
 
@@ -149,4 +176,33 @@ func SignIn(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusFound)
 	json.NewEncoder(w).Encode(userToReturn)
+}
+
+func RefreshToken(w http.ResponseWriter, r *http.Request) {
+	var requestBody map[string]string
+	if err := json.NewDecoder(r.Body).Decode(&requestBody); err != nil {
+		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+		return
+	}
+
+	refreshToken := requestBody["refreshToken"]
+	claims := &Claims{}
+	token, err := jwt.ParseWithClaims(refreshToken, claims, func(token *jwt.Token) (interface{}, error) {
+		return JwtKey, nil
+	})
+
+	if err != nil || !token.Valid {
+		http.Error(w, "Invalid refresh token", http.StatusUnauthorized)
+		return
+	}
+
+	newToken, err := GenerateToken(claims.Email)
+	if err != nil {
+		http.Error(w, "Error generating new token", http.StatusInternalServerError)
+		return
+	}
+
+	json.NewEncoder(w).Encode(map[string]string{
+		"token": newToken,
+	})
 }

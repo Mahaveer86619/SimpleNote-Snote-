@@ -19,7 +19,7 @@ type Note struct {
 	CreationDate    string `json:"createdAt"`
 	UpdationDate    string `json:"updatedAt"`
 	TileColor       string `json:"noteColorIndex"`
-	CreatorId       string `json:"creatorUid"`
+	CreatorId       string `json:"creatorEmail"`
 }
 
 var NOTE_COLLECTION_NAME = "notes"
@@ -41,11 +41,11 @@ func getNote(noteId string) (Note, error) {
 	return note, nil
 }
 
-func getAllUserNotes(userId string) ([]Note, error) {
+func getAllUserNotes(userEmail string) ([]Note, error) {
 	ctx := context.Background()
 	client := config.GetFirestoreClient()
 
-	query := client.Collection(NOTE_COLLECTION_NAME).Where("creatorUid", "==", userId)
+	query := client.Collection(NOTE_COLLECTION_NAME).Where("creatorUid", "==", userEmail)
 
 	var notes []Note
 	iter := query.Documents(ctx)
@@ -115,7 +115,6 @@ func deleteNote(id string) error {
 func CreateNoteHandler(w http.ResponseWriter, r *http.Request) {
 	var note Note
 	if err := json.NewDecoder(r.Body).Decode(&note); err != nil {
-		// http.Error(w, err.Error(), http.StatusBadRequest)
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte("Invalid request body"))
 		return
@@ -132,7 +131,7 @@ func CreateNoteHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetNoteHandler(w http.ResponseWriter, r *http.Request) {
-	noteId := r.URL.Query().Get("id")
+	noteId := r.URL.Query().Get("noteId")
 
 	note, err := getNote(noteId)
 	if err != nil {
@@ -145,7 +144,7 @@ func GetNoteHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetAllUserNotesHandler(w http.ResponseWriter, r *http.Request) {
-	userId := r.URL.Query().Get("id")
+	userId := r.URL.Query().Get("userEmail")
 
 	notes, err := getAllUserNotes(userId)
 	if err != nil {
@@ -178,7 +177,7 @@ func UpdateNoteHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func DeleteNoteHandler(w http.ResponseWriter, r *http.Request) {
-	noteId := r.URL.Query().Get("id")
+	noteId := r.URL.Query().Get("noteId")
 
 	err := deleteNote(noteId)
 	if err != nil {

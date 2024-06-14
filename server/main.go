@@ -5,6 +5,8 @@ import (
 	"net/http"
 
 	"github.com/Mahaveer86619/SimpleNote-Snote-/features/auth"
+	"github.com/Mahaveer86619/SimpleNote-Snote-/features/note"
+	"github.com/Mahaveer86619/SimpleNote-Snote-/middleware"
 )
 
 var welcomeString = `
@@ -45,4 +47,12 @@ func handleFunctions(mux *http.ServeMux) {
 	//* Authentication
 	mux.HandleFunc("/auth/signup", auth.SignUp)
 	mux.HandleFunc("/auth/signin", auth.SignIn)
+    mux.HandleFunc("/auth/refresh", auth.RefreshToken)
+
+	//* Note operations
+    mux.Handle("/notes/create", middleware.AuthMiddleware(http.HandlerFunc(note.CreateNoteHandler)))
+    mux.Handle("/notes/get/{noteId}", middleware.AuthMiddleware(http.HandlerFunc(note.GetNoteHandler)))
+    mux.Handle("/notes/getall/{userEmail}", middleware.AuthMiddleware(http.HandlerFunc(note.GetAllUserNotesHandler)))
+    mux.Handle("/notes/update", middleware.AuthMiddleware(http.HandlerFunc(note.UpdateNoteHandler)))
+    mux.Handle("/notes/delete/{noteId}", middleware.AuthMiddleware(http.HandlerFunc(note.DeleteNoteHandler)))
 }
