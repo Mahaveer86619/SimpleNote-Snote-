@@ -1,13 +1,14 @@
 // ignore_for_file: file_names
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:get_it/get_it.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:snote/core/resources/data_state.dart';
 import 'package:snote/core/utils/extensions.dart';
-import 'package:snote/features/auth/repository/auth_remote_repository.dart';
 import 'package:snote/features/auth/view/pages/signup_page.dart';
 import 'package:snote/features/auth/view/widgets/auth_grad_button.dart';
 import 'package:snote/features/auth/view/widgets/text_field.dart';
+import 'package:snote/features/auth/viewmodel/bloc/auth_bloc.dart';
 
 class SignInPage extends StatefulWidget {
   const SignInPage({super.key});
@@ -29,30 +30,6 @@ class _SignInPageState extends State<SignInPage> {
         builder: (_) => screen,
       ),
     );
-  }
-
-  void _onSignInSuccess() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Sign In success')),
-    );
-  }
-
-  void _onAuthFailure(String? text) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(text ?? 'Sign In failed')),
-    );
-  }
-
-  void onSignIn() async {
-    final res = await AuthRemoteRepository().signIn(
-      emailController.text,
-      passwordController.text,
-    );
-    if (res is DataSuccess) {
-      _onSignInSuccess();
-    } else {
-      _onAuthFailure(res.error);
-    }
   }
 
   @override
@@ -132,13 +109,42 @@ class _SignInPageState extends State<SignInPage> {
                 const SizedBox(
                   height: 280,
                 ),
-                AuthGradButton(
-                  onPressed: () {
-                    if (_formkey.currentState!.validate()) {
-                      onSignIn();
-                    }
-                  },
-                  text: 'Sign Up',
+                BlocProvider(
+                  create: (context) => GetIt.instance<AuthBloc>(),
+                  child: BlocConsumer<AuthBloc, AuthState>(
+                    listener: (context, state) {
+                      if (state is AuthAuthenticated) {
+                        // Navigate to home page or wherever you want
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text("Sign in success")),
+                        );
+                      } else if (state is AuthError) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(state.error)),
+                        );
+                      }
+                    },
+                    builder: (context, state) {
+                      if (state is AuthLoading) {
+                        return const Center(
+                            child: CircularProgressIndicator.adaptive());
+                      }
+
+                      return AuthGradButton(
+                        onPressed: () {
+                          if (_formkey.currentState!.validate()) {
+                            context.read<AuthBloc>().add(
+                                  SignInEvent(
+                                    email: emailController.text,
+                                    password: passwordController.text,
+                                  ),
+                                );
+                          }
+                        },
+                        text: 'Sign In',
+                      );
+                    },
+                  ),
                 ),
                 const SizedBox(
                   height: 40,
