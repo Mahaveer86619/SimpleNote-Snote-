@@ -25,7 +25,7 @@ class UserModel {
       'id': id,
       'username': username,
       'email': email,
-      'token': tokenKey,
+      'tokenKey': tokenKey,
       'refreshTokenKey': refreshTokenKey,
     };
   }

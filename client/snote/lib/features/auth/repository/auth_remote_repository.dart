@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:snote/core/resources/data_state.dart';
-import 'package:snote/features/auth/model/user_model.dart';
+import 'package:snote/core/model/user_model.dart';
 
 class AuthRemoteRepository {
   Future<DataState<UserModel>> signUp(
@@ -55,7 +55,7 @@ class AuthRemoteRepository {
           },
         ),
       );
-      if (response.statusCode != 200) {
+      if (response.statusCode != 302) {
         return DataFailure(response.body, response.statusCode);
       }
       return DataSuccess(UserModel.fromJson(jsonDecode(response.body)));

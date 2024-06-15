@@ -20,7 +20,7 @@ func init() {
 var JwtKey = []byte(os.Getenv("JWT_SECRET"))
 
 func GenerateToken(email string) (string, error) {
-    expirationTime := time.Now().Add(15 * time.Minute)
+    expirationTime := time.Now().Add(25 * time.Hour) // 1 day + 1 hour
     claims := &Claims{
         Email: email,
         StandardClaims: jwt.StandardClaims{
@@ -32,7 +32,7 @@ func GenerateToken(email string) (string, error) {
 }
 
 func GenerateRefreshToken(email string) (string, error) {
-    expirationTime := time.Now().Add(24 * time.Hour)
+    expirationTime := time.Now().Add(721 * time.Hour) // 30 days + 1 hour
     claims := &Claims{
         Email: email,
         StandardClaims: jwt.StandardClaims{

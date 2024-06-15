@@ -1,18 +1,15 @@
 /*
-
-
 Endpoints:
 
 /auth/signup 					Generates a new token
 /auth/signin 					Generates a new token
-/auth/refresh 					Refreshes the token
+/auth/refresh 					Refreshes the tokens
 
 /notes/create 					Creates a new note with a valid token
 /notes/get/{noteId}				Returns a note with a valid token and noteId
 /notes/getall/{userEmail} 		Returns all notes for a user with a valid token and userEmail
 /notes/update 					Updates a note with a valid token and note
 /notes/delete/{noteId} 			Deletes a note with a valid token and noteId
-
 
 */
 

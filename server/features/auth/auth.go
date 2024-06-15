@@ -178,7 +178,7 @@ func SignIn(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(userToReturn)
 }
 
-func RefreshToken(w http.ResponseWriter, r *http.Request) {
+func RefreshToken(w http.ResponseWriter, r *http.Request,) {
 	var requestBody map[string]string
 	if err := json.NewDecoder(r.Body).Decode(&requestBody); err != nil {
 		http.Error(w, "Invalid request payload", http.StatusBadRequest)
@@ -202,7 +202,15 @@ func RefreshToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	newRefreshToken, err := GenerateRefreshToken(claims.Email)
+	if err != nil {
+		http.Error(w, "Error generating new token", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(map[string]string{
-		"token": newToken,
+		"tokenKey": newToken,
+		"refreshTokenKey": newRefreshToken,
 	})
 }
